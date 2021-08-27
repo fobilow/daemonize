@@ -50,8 +50,9 @@ func Setup(name string, set *flag.FlagSet) func() {
 
 	var detachFlagFound bool
 	for _, a := range os.Args {
-		if a == "-"+flagName || a == "--"+flagName {
+		if strings.TrimLeft(a, "-") == flagName {
 			detachFlagFound = true
+			break
 		}
 	}
 
