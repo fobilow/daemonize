@@ -15,9 +15,8 @@ import (
 const pidFileSuffix = "detach.pid"
 
 var (
-	flagName  string
-	flagSet   *flag.FlagSet
-	flagValue *string
+	flagName string
+	flagSet  *flag.FlagSet
 )
 
 type Process struct {
@@ -47,7 +46,7 @@ func Setup(name string, set *flag.FlagSet) func() {
 		flagSet = flag.CommandLine
 	}
 	flagName = name
-	flagValue = flagSet.String(name, "", "start, status, stop or restart")
+	flagSet.String(name, "", "start, status, stop or restart")
 
 	var detachFlagFound bool
 	for _, a := range os.Args {
@@ -57,7 +56,7 @@ func Setup(name string, set *flag.FlagSet) func() {
 	}
 
 	if detachFlagFound {
-		if err := parse(); err != nil {
+		if err := run(); err != nil {
 			fmt.Println("ERROR: parse error:", err)
 		}
 		os.Exit(0)
@@ -75,21 +74,18 @@ func cleanup() {
 	}
 }
 
-func parse() error {
-	if err := flagSet.Parse(os.Args[1:]); err != nil {
-		return err
-	}
-
+func run() error {
+	action, args := parse()
 	var err error
-	switch *flagValue {
+	switch action {
 	case "start":
-		err = start()
+		err = start(args)
 	case "status":
 		err = status()
 	case "stop":
 		err = stop()
 	case "restart":
-		err = restart()
+		err = restart(args)
 	default:
 		err = errors.New("invalid detach option")
 		flagSet.Usage()
@@ -97,21 +93,26 @@ func parse() error {
 	return err
 }
 
-func start() error {
-	var args []string
+func parse() (action string, args []string) {
 	var found bool
 	for _, a := range os.Args {
-		if a != "-"+flagName && a != "--"+flagName {
-			if !found {
-				args = append(args, a)
-			} else {
-				found = false
-			}
-		} else {
+		if strings.TrimLeft(a, "-") == flagName {
 			found = true
+			continue
 		}
-	}
 
+		if found {
+			action = a
+			found = false
+			continue
+		}
+
+		args = append(args, a)
+	}
+	return
+}
+
+func start(args []string) error {
 	fmt.Println("running in detached mode")
 	var sysproc = &syscall.SysProcAttr{} // Noctty: true
 	var attr = os.ProcAttr{
@@ -191,12 +192,12 @@ func stop() error {
 	return nil
 }
 
-func restart() error {
+func restart(args []string) error {
 	if err := stop(); err != nil {
 		return err
 	}
 
-	return start()
+	return start(args)
 }
 
 func findAllProcesses() []Process {
