@@ -1,8 +1,3 @@
-# Detach
-Add detach mode to any go CLI application
-
-## Example
-```go
 package main
 
 import (
@@ -18,10 +13,5 @@ func main() {
 
 	// long running process
 	timer := time.NewTimer(1 * time.Minute)
-	fmt.Println(<- timer.C)
+	fmt.Println(<-timer.C)
 }
-
-```
-Then you can run the app in daemon mode by adding the flag:
-`app -d`
-    
