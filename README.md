@@ -22,6 +22,9 @@ func main() {
 }
 
 ```
-Then you can run the app in daemon mode by adding the flag:
-`app -d`
+## Available Options
+- `app -d start` - start app in detach mode
+- `app -d stop` - stop apps running in detach mode
+- `app -d restart` - restart app running in detach mode
+- `app -d status` - view status of apps running in detach mode
     
