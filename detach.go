@@ -21,12 +21,13 @@ var (
 
 type Process struct {
 	Pid       int
+	Cmd       string
 	Args      []string
 	StartTime time.Time
 }
 
 func (p Process) PidFile() string {
-	return filepath.Join(os.TempDir(), fmt.Sprintf("%d_%s", p.Pid, pidFileSuffix))
+	return filepath.Join(os.TempDir(), fmt.Sprintf("%d_%s_%s", p.Pid, p.Cmd, pidFileSuffix))
 }
 
 func (p Process) String() string {
@@ -69,9 +70,11 @@ func Setup(name string, set *flag.FlagSet) func() {
 }
 
 func cleanup() {
-	d := Process{Pid: os.Getpid()}
-	if err := os.Remove(d.PidFile()); err != nil {
-		fmt.Println("ERROR: cleanup:", err)
+	d := Process{Cmd: filepath.Base(os.Args[0]), Pid: os.Getpid()}
+	if _, err := os.Stat(d.PidFile()); err == nil {
+		if err := os.Remove(d.PidFile()); err != nil {
+			fmt.Println("ERROR: cleanup:", err)
+		}
 	}
 }
 
@@ -133,9 +136,9 @@ func start(args []string) error {
 		return err
 	}
 
-	fmt.Println("Flags:", flag.Args())
 	p := Process{
 		Pid:       process.Pid,
+		Cmd:       filepath.Base(os.Args[0]),
 		Args:      args,
 		StartTime: startTime,
 	}
@@ -210,7 +213,8 @@ func findAllProcesses() []Process {
 	var processes []Process
 	for _, entry := range de {
 		var d Process
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), pidFileSuffix) {
+		cmd := filepath.Base(os.Args[0])
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), cmd+"_"+pidFileSuffix) {
 			f, err := os.Open(filepath.Join(os.TempDir(), entry.Name()))
 			if err != nil {
 				fmt.Println("ERROR:", err)
