@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/fobilow/detach"
 	"time"
+
+	"github.com/fobilow/detach"
 )
 
 func main() {

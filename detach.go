@@ -124,8 +124,8 @@ func start(args []string) error {
 		Env: os.Environ(),
 		Files: []*os.File{
 			os.Stdin,
-			nil,
-			nil,
+			os.Stdout,
+			os.Stderr,
 		},
 		Sys: sysproc,
 	}
